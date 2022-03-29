@@ -62,7 +62,7 @@ char	*lookup_fullcmd(char *cmd, char *envp[])
 
 	if (cmd[0] == '/' || cmd[0] == '.')
 	{
-		if (access(cmd, X_OK) == 0)
+		if (access(cmd, X_OK) < 0)
 			file_error_exit(cmd, errno);
 		return (cmd);
 	}
