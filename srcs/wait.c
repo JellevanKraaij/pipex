@@ -26,7 +26,7 @@ int	wait_for_all_childs(int child_count, int lastpid)
 		if (waitpid(-1, &status, 0) == lastpid && WIFEXITED(status))
 				exit_code = WEXITSTATUS(status);
 		if (WIFEXITED(status) || WIFSIGNALED(status))
-		i++;
+			i++;
 	}
 	return (exit_code);
 }
