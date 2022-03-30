@@ -13,16 +13,23 @@
 #ifndef PIPEX_H
 # define PIPEX_H
 
+typedef struct s_env
+{
+	char	**envp;
+	char	**parsed_path;
+}	t_env;
+
 typedef struct s_files
 {
 	char	*input;
 	char	*output;
 }	t_files;
 
-void	pipex(t_files files, char **cmds, int total_cmds, char *envp[]);
+int		pipex(t_files files, char **cmds, int total_cmds, t_env env);
 
+char	**parse_path(char *envp[]);
 char	*lookup_fullcmd(char *cmd, char *envp[]);
-
+int		wait_for_all_childs(int child_count, int lastpid);
 void	perror_exit(char *s);
 void	*null_exit(void *p);
 void	file_error_exit(char *filename, int errnum);

@@ -55,10 +55,9 @@ char	*check_paths(char *test_cmd, char **path)
 	return (NULL);
 }
 
-char	*lookup_fullcmd(char *cmd, char *envp[])
+char	*lookup_fullcmd(char *cmd, char **path)
 {
 	char	*full_cmd;
-	char	**path;
 
 	if (cmd[0] == '/' || cmd[0] == '.')
 	{
@@ -66,7 +65,6 @@ char	*lookup_fullcmd(char *cmd, char *envp[])
 			file_error_exit(cmd, errno);
 		return (cmd);
 	}
-	path = parse_path(envp);
 	if (path == NULL)
 		cmd_error_exit(cmd);
 	full_cmd = check_paths(null_exit(ft_strjoin("/", cmd)), path);

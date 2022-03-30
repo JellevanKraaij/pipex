@@ -16,7 +16,7 @@
 #include <libft.h>
 #include <errno.h>
 
-void	execute_cmd(char *cmd, int input, int output, char *envp[])
+void	execute_cmd(char *cmd, int input, int output, t_env env)
 {
 	char	**cmd_argv;
 	char	*file;
@@ -28,12 +28,12 @@ void	execute_cmd(char *cmd, int input, int output, char *envp[])
 	close(input);
 	close(output);
 	cmd_argv = null_exit(ft_split(cmd, ' '));
-	file = lookup_fullcmd(cmd_argv[0], envp);
-	execve(file, cmd_argv, envp);
+	file = lookup_fullcmd(cmd_argv[0], env.parsed_path);
+	execve(file, cmd_argv, env.envp);
 	perror_exit("pipex");
 }
 
-void	first_cmd(char *cmd, char *input, int output[2], char *envp[])
+void	first_cmd(char *cmd, char *input, int output[2], t_env env)
 {
 	int	forkr;
 	int	inputfd;
@@ -47,12 +47,12 @@ void	first_cmd(char *cmd, char *input, int output[2], char *envp[])
 		if (inputfd < 0)
 			file_error_exit(input, errno);
 		close(output[0]);
-		execute_cmd(cmd, inputfd, output[1], envp);
+		execute_cmd(cmd, inputfd, output[1], env);
 	}
 	close(output[1]);
 }
 
-void	mid_cmd(char *cmd, int input, int output[2], char *envp[])
+void	mid_cmd(char *cmd, int input, int output[2], t_env env)
 {
 	int	forkr;
 
@@ -62,26 +62,36 @@ void	mid_cmd(char *cmd, int input, int output[2], char *envp[])
 	if (forkr == 0)
 	{
 		close(output[0]);
-		execute_cmd(cmd, input, output[1], envp);
+		execute_cmd(cmd, input, output[1], env);
 	}
 	close(input);
 	close(output[1]);
 }
 
-void	last_cmd(char *cmd, int input, char *output, char *envp[])
+int	last_cmd(char *cmd, int input, char *output, t_env env)
 {
 	int	outputfd;
+	int	forkr;
 
-	outputfd = open(output, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-	if (outputfd < 0)
-		file_error_exit(output, errno);
-	execute_cmd(cmd, input, outputfd, envp);
+	forkr = fork();
+	if (forkr < 0)
+		perror_exit("pipex");
+	if (forkr == 0)
+	{
+		outputfd = open(output, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+		if (outputfd < 0)
+			file_error_exit(output, errno);
+		execute_cmd(cmd, input, outputfd, env);
+	}
+	close(input);
+	return (forkr);
 }
 
-void	pipex(t_files files, char **cmds, int total_cmds, char *envp[])
+int	pipex(t_files files, char **cmds, int total_cmds, t_env env)
 {
 	int	i;
 	int	j;
+	int	lastpid;
 	int	pipefd[2][2];
 
 	i = 0;
@@ -91,12 +101,13 @@ void	pipex(t_files files, char **cmds, int total_cmds, char *envp[])
 		if (i + 1 < total_cmds)
 			pipe(pipefd[j]);
 		if (i == 0)
-			first_cmd(cmds[i], files.input, pipefd[j], envp);
+			first_cmd(cmds[i], files.input, pipefd[j], env);
 		else if (i + 1 == total_cmds)
-			last_cmd(cmds[i], pipefd[!j][0], files.output, envp);
+			lastpid = last_cmd(cmds[i], pipefd[!j][0], files.output, env);
 		else
-			mid_cmd(cmds[i], pipefd[!j][0], pipefd[j], envp);
+			mid_cmd(cmds[i], pipefd[!j][0], pipefd[j], env);
 		j = !j;
 		i++;
 	}
+	return (wait_for_all_childs(total_cmds, lastpid));
 }

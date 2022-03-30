@@ -18,7 +18,7 @@ BUILD_DIR	=	build
 LIBFT		=	libft/libft.a
 CFLAGS 		=	-Wall -Wextra -Werror
 
-SRCS		=	main.c pipex.c error_exit.c path_parsing.c
+SRCS		=	main.c pipex.c error_exit.c path_parsing.c wait.c
 
 DIR_CREATE	= @mkdir -p $(@D)
 _HEADERS	= ${addprefix ${HEADERS_DIR}/, ${HEADERS}}

@@ -1,31 +1,32 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        ::::::::            */
-/*   main.c                                             :+:    :+:            */
+/*   wait.c                                             :+:    :+:            */
 /*                                                     +:+                    */
 /*   By: jvan-kra <jvan-kra@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
-/*   Created: 2022/03/24 17:00:21 by jvan-kra      #+#    #+#                 */
-/*   Updated: 2022/03/24 17:00:21 by jvan-kra      ########   odam.nl         */
+/*   Created: 2022/03/30 12:20:49 by jvan-kra      #+#    #+#                 */
+/*   Updated: 2022/03/30 12:20:49 by jvan-kra      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
+#include <sys/wait.h>
 #include "pipex.h"
-#include <libft.h>
 
-int	main(int argc, char *argv[], char *envp[])
+int	wait_for_all_childs(int child_count, int lastpid)
 {
-	t_files		files;
-	t_env		env;
+	int	i;
+	int	exit_code;
+	int	status;
 
-	if (argc < 5)
+	i = 0;
+	exit_code = 1;
+	while (i < child_count)
 	{
-		ft_putendl_fd("input error\n", 2);
-		exit(1);
+		if (waitpid(-1, &status, 0) == lastpid && WIFEXITED(status))
+				exit_code = WEXITSTATUS(status);
+		if (WIFEXITED(status) || WIFSIGNALED(status))
+		i++;
 	}
-	files.input = argv[1];
-	files.output = argv[argc - 1];
-	env.envp = envp;
-	env.parsed_path = parse_path(envp);
-	return (pipex(files, &argv[2], argc - 3, env));
+	return (exit_code);
 }
